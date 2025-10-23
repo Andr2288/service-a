@@ -11,6 +11,7 @@ import com.lab.servicea.dto.BatchRequest;
 import com.lab.servicea.dto.SMSRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -31,7 +32,9 @@ public class SenderService {
     private final KafkaTemplate<String, BatchRequest> kafkaTemplate;
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    private static final String SERVICE_B_URL = "http://localhost:8081/api/messages/batch";
+    @Value("${service-b.url}")
+    private String serviceBUrl;
+
     private static final String KAFKA_TOPIC = "sms-topic";
 
     public String sendSyncHTTP(List<SMSRequest> messages) {
@@ -43,7 +46,7 @@ public class SenderService {
         request.setMessages(messages);
 
         try {
-            restTemplate.postForObject(SERVICE_B_URL, request, String.class);
+            restTemplate.postForObject(serviceBUrl + "/api/messages/batch", request, String.class);
             log.info("Sent {} messages via SYNC_HTTP with runId: {}", messages.size(), runId);
         } catch (Exception e) {
             log.error("Error sending via SYNC_HTTP: {}", e.getMessage());
@@ -68,7 +71,7 @@ public class SenderService {
                 request.setMessages(batch);
 
                 try {
-                    restTemplate.postForObject(SERVICE_B_URL, request, String.class);
+                    restTemplate.postForObject(serviceBUrl + "/api/messages/batch", request, String.class);
                     log.info("Sent batch of {} messages via ASYNC_HTTP", batch.size());
                 } catch (Exception e) {
                     log.error("Error sending batch via ASYNC_HTTP: {}", e.getMessage());
