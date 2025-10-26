@@ -13,6 +13,7 @@ import com.lab.servicea.model.SMS;
 import com.lab.servicea.service.SMSService;
 import com.lab.servicea.service.SenderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,10 @@ public class SMSController {
 
     private final SMSService smsService;
     private final SenderService senderService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    @Value("${service-b.url}")
+    private String serviceBUrl;
 
     @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateSMS(@RequestBody Map<String, Integer> request) {
@@ -96,7 +100,7 @@ public class SMSController {
     @GetMapping("/metrics/{runId}")
     public ResponseEntity<Map<String, Object>> getMetrics(@PathVariable String runId) {
         try {
-            String url = "http://localhost:8081/api/metrics/summary?runId=" + runId;
+            String url = serviceBUrl + "/api/metrics/summary?runId=" + runId;
             Map<String, Object> metrics = restTemplate.getForObject(url, Map.class);
             return ResponseEntity.ok(metrics);
         } catch (Exception e) {
@@ -109,7 +113,7 @@ public class SMSController {
     @GetMapping("/results")
     public ResponseEntity<List<Map<String, Object>>> getResults() {
         try {
-            String url = "http://localhost:8081/api/results";
+            String url = serviceBUrl + "/api/results";
             List<Map<String, Object>> results = restTemplate.getForObject(url, List.class);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
